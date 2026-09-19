@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 
-// Placeholder inbox — replace with a verified Solomonic Intelligence address before launch.
 const CONTACT_EMAIL = "contact@solomonicintelligence.com";
 
 const inquiryTypes = [
@@ -13,43 +12,70 @@ const inquiryTypes = [
   "General",
 ];
 
-export function ContactForm() {
-  const [submitted, setSubmitted] = useState(false);
+type Status = "idle" | "submitting" | "success" | "error";
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+export function ContactForm() {
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setStatus("submitting");
+    setErrorMessage(null);
+
     const form = e.currentTarget;
     const data = new FormData(form);
-    const name = String(data.get("name") ?? "");
-    const organization = String(data.get("organization") ?? "");
-    const role = String(data.get("role") ?? "");
-    const email = String(data.get("email") ?? "");
-    const inquiryType = String(data.get("inquiryType") ?? "");
-    const jurisdiction = String(data.get("jurisdiction") ?? "");
-    const message = String(data.get("message") ?? "");
+    const payload = {
+      name: String(data.get("name") ?? ""),
+      organization: String(data.get("organization") ?? ""),
+      role: String(data.get("role") ?? ""),
+      email: String(data.get("email") ?? ""),
+      inquiryType: String(data.get("inquiryType") ?? ""),
+      jurisdiction: String(data.get("jurisdiction") ?? ""),
+      message: String(data.get("message") ?? ""),
+      website: String(data.get("website") ?? ""), // honeypot
+    };
 
-    const subject = `[${inquiryType}] Inquiry from ${name || "Solomonic Intelligence website"}`;
-    const bodyLines = [
-      `Name: ${name}`,
-      `Organization: ${organization}`,
-      `Role: ${role}`,
-      `Email: ${email}`,
-      jurisdiction ? `Country / Jurisdiction: ${jurisdiction}` : "",
-      `Inquiry Type: ${inquiryType}`,
-      "",
-      message,
-    ].filter(Boolean);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
 
-    const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
+      if (!res.ok || !result?.ok) {
+        throw new Error(result?.error || "Could not send message. Please try again later.");
+      }
 
-    window.location.href = mailto;
-    setSubmitted(true);
+      setStatus("success");
+      form.reset();
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  }
+
+  if (status === "success") {
+    return (
+      <div className="max-w-xl border border-brass-1/40 bg-bg-1 p-8">
+        <p className="font-mono-label text-[11px] uppercase text-brass-0/90">Received</p>
+        <p className="mt-3 text-ink-1">
+          Your inquiry has been sent to Solomonic Intelligence. We will respond
+          directly to the email address you provided.
+        </p>
+      </div>
+    );
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl space-y-8">
+      {/* Honeypot field — hidden from real visitors, left blank by them */}
+      <div className="absolute -left-[9999px]" aria-hidden="true">
+        <label htmlFor="website">Website</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
+
       <div className="grid gap-8 sm:grid-cols-2">
         <Field label="Name" name="name" required />
         <Field label="Organization" name="organization" />
@@ -58,10 +84,7 @@ export function ContactForm() {
       </div>
 
       <div>
-        <label
-          htmlFor="inquiryType"
-          className="font-mono-label text-[11px] uppercase text-ink-3"
-        >
+        <label htmlFor="inquiryType" className="font-mono-label text-[11px] uppercase text-ink-3">
           Inquiry Type
         </label>
         <select
@@ -100,17 +123,24 @@ export function ContactForm() {
       <div>
         <button
           type="submit"
-          className="border border-brass-1/60 px-6 py-3 font-mono-label text-xs uppercase text-ink-0 transition-colors hover:border-brass-0 hover:bg-brass-2/10"
+          disabled={status === "submitting"}
+          className="border border-brass-1/60 px-6 py-3 font-mono-label text-xs uppercase text-ink-0 transition-colors hover:border-brass-0 hover:bg-brass-2/10 disabled:opacity-50"
         >
-          Submit Inquiry
+          {status === "submitting" ? "Sending…" : "Submit Inquiry"}
         </button>
-        <p className="mt-3 text-xs text-ink-3">
-          Submitting opens a message addressed to Solomonic Intelligence in
-          your email client.
-        </p>
-        {submitted && (
-          <p className="mt-2 text-xs text-brass-0/90">
-            Your email client should now be open with this inquiry prepared.
+
+        {status === "error" && (
+          <p className="mt-3 text-xs text-ink-1">
+            {errorMessage} You can also reach us directly at{" "}
+            <a href={`mailto:${CONTACT_EMAIL}`} className="underline underline-offset-4">
+              {CONTACT_EMAIL}
+            </a>
+            .
+          </p>
+        )}
+        {status !== "error" && (
+          <p className="mt-3 text-xs text-ink-3">
+            Submissions are sent directly to Solomonic Intelligence.
           </p>
         )}
       </div>
