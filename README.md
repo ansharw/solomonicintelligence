@@ -20,31 +20,33 @@ npm run build
 
 This runs `next build` with `output: "export"` (see `next.config.ts`) and
 produces a fully static site in `out/`. There is no Node.js server and no
-Next.js API routes — the only backend logic is the Cloudflare Pages
-Function at `functions/api/contact.ts`, which handles the contact form.
+Next.js API routes — the only backend logic is the Cloudflare Worker at
+`worker/index.ts`, which handles `POST /api/contact`.
 
-## Deploying to Cloudflare Pages
+## Deploying to Cloudflare
 
-This project is a **static export**, not a server-rendered Next.js app.
-Do not select the plain "Next.js" framework preset — it assumes an SSR
-deployment via `@opennextjs/cloudflare` / `@cloudflare/next-on-pages` and
-will fail with an `ENOENT ... .next/standalone/...` error, since static
-export never produces that output.
+This project deploys through **Cloudflare Workers Builds** (the unified
+Workers + static assets pipeline), driven by `wrangler.toml` — not the
+classic Cloudflare Pages Functions convention, and not an SSR Next.js
+adapter.
 
-**Correct dashboard settings** (Workers & Pages → project → Settings →
-Build):
+**Dashboard settings** (project → Settings → Build):
 
 | Setting | Value |
 |---|---|
-| Framework preset | `Next.js (Static HTML Export)` (or `None`) |
 | Build command | `npm run build` |
-| Build output directory | `out` |
 
-`wrangler.toml` in this repo also declares `pages_build_output_dir = "out"`
-and the `EMAIL` send-email binding used by the contact form — Wrangler
-configuration is the source of truth for those fields once present, but
-the **Build command** field above is still set independently in the
-dashboard and must not be left on an SSR/OpenNext default.
+Do **not** select the plain "Next.js" framework preset for the build step —
+it assumes an SSR deployment via `@opennextjs/cloudflare` and fails with
+`ENOENT ... .next/standalone/...`, since static export never produces
+that output. The build command above just needs to produce `out/`; the
+rest of the deploy (serving `out/` as static assets, plus routing
+`/api/*` to the Worker) is fully described by `wrangler.toml`:
+
+- `main = "worker/index.ts"` — the Worker entry point
+- `[assets] directory = "out"` — serves the static export
+- `run_worker_first = ["/api/*"]` — only `/api/*` requests reach the
+  Worker; everything else is served directly from `out/`
 
 ### Email binding (contact form)
 
@@ -53,16 +55,15 @@ third-party API. Before it will actually deliver mail:
 
 1. Enable **Email Routing** for `solomonicintelligence.com` and add a rule
    forwarding `contact@solomonicintelligence.com` to the real inbox.
-2. In the Pages project, add a **Send Email** binding named `EMAIL`
-   (Settings → Functions → Bindings), restricted to
-   `contact@solomonicintelligence.com` — this matches
-   `functions/api/contact.ts` and `wrangler.toml`.
-3. Redeploy after adding the binding.
+2. Make sure a **Send Email** binding named `EMAIL` exists, restricted to
+   `contact@solomonicintelligence.com` — declared in `wrangler.toml`
+   under `[[send_email]]` and matched in `worker/index.ts`.
+3. Redeploy after Email Routing is enabled.
 
 ## Project structure
 
 - `src/app/` — pages (App Router)
 - `src/components/` — shared UI
 - `src/data/` — nav, capabilities, and research content
-- `functions/` — Cloudflare Pages Functions (kept separate from the
-  Next.js TypeScript project via `functions/tsconfig.json`)
+- `worker/` — the Cloudflare Worker entry point (kept separate from the
+  Next.js TypeScript project via `worker/tsconfig.json`)
