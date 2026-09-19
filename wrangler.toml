@@ -1,9 +1,12 @@
 # Cloudflare Pages configuration.
 #
-# Bindings for Git-connected Pages projects are normally set in the
-# dashboard (Workers & Pages > solomonicintelligence > Settings > Functions
-# > Bindings). This file documents the same binding as code, in case the
-# project is switched to Wrangler-based deploys later.
+# This file is the source of truth for `pages_build_output_dir` and the
+# `send_email` binding once present — see README.md "Deploying to
+# Cloudflare Pages". It does NOT control the CI "Build command"; that is
+# still a dashboard-only field (Settings > Build) and must be set to
+# `npm run build` with Framework preset `Next.js (Static HTML Export)`
+# (or `None`) — NOT the plain "Next.js" preset, which assumes SSR via
+# @opennextjs/cloudflare and will fail against a static export.
 
 name = "solomonicintelligence"
 pages_build_output_dir = "out"
