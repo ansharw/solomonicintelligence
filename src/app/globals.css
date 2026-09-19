@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+:root {
+  --bg-0: #080909;
+  --bg-1: #0b0c0c;
+  --bg-2: #101111;
+  --bg-3: #151616;
+
+  --ink-0: #e9e7df;
+  --ink-1: #d9d7d0;
+  --ink-2: #c8c6bf;
+  --ink-3: #948f83;
+
+  --line-0: rgba(233, 231, 223, 0.08);
+  --line-1: rgba(233, 231, 223, 0.14);
+  --line-2: rgba(233, 231, 223, 0.22);
+
+  --brass-0: #b7975a;
+  --brass-1: #9c7f47;
+  --brass-2: #6f5c34;
+
+  --burgundy: #401419;
+  --navy: #0c1520;
+
+  --background: var(--bg-0);
+  --foreground: var(--ink-0);
+}
+
+@theme inline {
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-bg-3: var(--bg-3);
+
+  --color-ink-0: var(--ink-0);
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+
+  --color-line-0: var(--line-0);
+  --color-line-1: var(--line-1);
+  --color-line-2: var(--line-2);
+
+  --color-brass-0: var(--brass-0);
+  --color-brass-1: var(--brass-1);
+  --color-brass-2: var(--brass-2);
+
+  --color-burgundy: var(--burgundy);
+  --color-navy: var(--navy);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-serif: var(--font-editorial), "Iowan Old Style", "Palatino Linotype", serif;
+  --font-sans: var(--font-technical), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-technical-mono), "SFMono-Regular", Menlo, monospace;
+}
+
+* {
+  border-color: var(--line-0);
+}
+
+html {
+  background: var(--bg-0);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--brass-2);
+  color: var(--ink-0);
+}
+
+.font-serif-display {
+  font-family: var(--font-serif);
+}
+
+.font-mono-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+.hairline {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--line-2) 20%,
+    var(--line-2) 80%,
+    transparent
+  );
+  height: 1px;
+}
+
+.grain {
+  background-image: radial-gradient(var(--line-0) 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.line-draw {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: dash 2.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+}
