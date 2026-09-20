@@ -96,7 +96,10 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
       html,
       replyTo: email,
     });
-  } catch {
+  } catch (err) {
+    // Surfaces in Cloudflare's Worker logs (dashboard "Logs" tab, or
+    // `wrangler tail`) — not returned to the client.
+    console.error("EMAIL.send failed:", err instanceof Error ? err.message : err, (err as { code?: string })?.code);
     return json(
       { ok: false, error: "Could not send message. Please try again later." },
       502
