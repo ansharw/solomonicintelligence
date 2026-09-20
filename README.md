@@ -60,6 +60,13 @@ third-party API. Before it will actually deliver mail:
    under `[[send_email]]` and matched in `worker/index.ts`.
 3. Redeploy after Email Routing is enabled.
 
+### Triggering a new deployment
+
+**"Retry deployment" re-runs the same commit that deployment was built
+from — it does not pick up new commits.** If you've pushed a fix, use
+"Create deployment" (or push another commit) to build the current `main`
+HEAD instead of retrying an old, already-failed deployment.
+
 ## Project structure
 
 - `src/app/` — pages (App Router)
